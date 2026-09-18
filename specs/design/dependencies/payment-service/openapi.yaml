@@ -1,0 +1,100 @@
+openapi: 3.0.3
+info:
+  title: Sampath Bank Internet Payment Gateway (assumed subset)
+  version: "1.0"
+  description: >
+    ASSUMED interface, written under the user's authorization, covering only
+    the operations this design calls: initiate a hosted-page card payment for
+    a booking, and receive the gateway's payment notification callback.
+    Sampath Bank's real IPG is a merchant-onboarded, credential-gated
+    integration with no publicly published API document; this models the
+    common hosted-payment-page pattern most bank IPGs in this region use
+    (merchant ID + HMAC-SHA256 request/response hash, browser redirect to a
+    hosted card page, server-to-server payment notification). Uncertain: the
+    exact field names and hash algorithm/order, the redirect parameter names,
+    the notification payload shape, and refund/void support. Treat this as a
+    placeholder contract to validate integration logic against, not the
+    provider's real wire format — confirm and replace once merchant
+    onboarding documentation is available.
+servers:
+  - url: https://ipg.sampath.lk
+components:
+  securitySchemes:
+    hmacHash:
+      type: apiKey
+      in: header
+      name: X-Merchant-Hash
+      description: HMAC-SHA256 request hash computed from the merchant ID, order details and the merchant's hash secret, per Sampath's merchant integration guide.
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: integer }
+        message: { type: string }
+    PaymentInitiationRequest:
+      type: object
+      required: [merchantId, orderId, amount, currency, returnUrl]
+      properties:
+        merchantId: { type: string }
+        orderId: { type: string, description: The reservation id this payment settles }
+        amount: { type: number }
+        currency: { type: string, description: ISO currency code, must match the property's configured currency }
+        returnUrl: { type: string, description: URL the guest is redirected back to after paying }
+    PaymentInitiationResponse:
+      type: object
+      properties:
+        redirectUrl: { type: string, description: Hosted card-entry page the guest is redirected to }
+        sessionId: { type: string }
+    PaymentNotification:
+      type: object
+      properties:
+        orderId: { type: string }
+        sessionId: { type: string }
+        status: { type: string, enum: [approved, declined, cancelled] }
+        amount: { type: number }
+        providerReference: { type: string }
+security:
+  - hmacHash: []
+paths:
+  /payments/initiate:
+    post:
+      operationId: initiatePayment
+      summary: Start a hosted-page card payment for a booking
+      x-aep-source: https://www.sampath.lk/digital-banking/online-banking?section=Internet-Payment-Gateway
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PaymentInitiationRequest' }
+      responses:
+        '201':
+          description: Payment session created; redirect the guest to redirectUrl
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaymentInitiationResponse' }
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /payments/notify:
+    post:
+      operationId: receivePaymentNotification
+      summary: Receive the gateway's server-to-server payment outcome notification
+      x-aep-source: https://www.sampath.lk/digital-banking/online-banking?section=Internet-Payment-Gateway
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PaymentNotification' }
+      responses:
+        '200':
+          description: Notification acknowledged
+        '400':
+          description: Invalid notification (e.g. hash mismatch)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }

@@ -4,6 +4,10 @@
     "name": "payment-service",
     "description": "Charges the guest's card/account online at the time of a direct booking, via Sampath Bank's Internet Payment Gateway (IPG).",
     "provider": "Sampath Bank",
+    "config": [
+      { "key": "SAMPATH_MERCHANT_ID", "description": "Your Sampath Bank IPG merchant ID, issued at merchant onboarding." },
+      { "key": "SAMPATH_HASH_SECRET", "secret": true, "description": "The hash secret used to sign and verify payment requests/notifications, issued at merchant onboarding." }
+    ],
     "contract": {
       "type": "openapi",
       "path": "openapi.yaml",
@@ -13,5 +17,6 @@
         "at": "2026-09-18T09:13:02Z"
       }
     }
-  }
+  },
+  "provenance": { "sourceUrl": "https://www.sampath.lk/digital-banking/online-banking?section=Internet-Payment-Gateway" }
 }
