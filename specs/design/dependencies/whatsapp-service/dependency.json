@@ -2,10 +2,14 @@
   "name": "whatsapp-service",
   "resource": {
     "name": "whatsapp-service",
-    "description": "Sends an optional WhatsApp message to guests who opt in, for the same booking/cancellation events as the email confirmation."
+    "description": "Sends an optional WhatsApp message to guests who opt in, for the same booking/cancellation events as the email confirmation.",
+    "provider": "Twilio",
+    "config": [
+      { "key": "TWILIO_ACCOUNT_SID", "description": "Your Twilio Account SID, found on the Twilio Console dashboard." },
+      { "key": "TWILIO_AUTH_TOKEN", "secret": true, "description": "Your Twilio Auth Token, found on the Twilio Console dashboard." },
+      { "key": "TWILIO_WHATSAPP_FROM", "description": "The Twilio WhatsApp-enabled sender number, in the form whatsapp:+<E.164 number>." }
+    ],
+    "contract": { "type": "openapi", "path": "openapi.yaml", "origin": "derived" }
   },
-  "suggestions": [
-    { "name": "WhatsApp Business Platform (Meta Cloud API)", "style": "rest-api", "description": "Meta's own WhatsApp Business API; requires template pre-approval for notification messages." },
-    { "name": "Twilio WhatsApp API", "style": "rest-api", "description": "Twilio's wrapper over the WhatsApp Business Platform, simpler onboarding than going direct to Meta." }
-  ]
+  "provenance": { "sourceUrl": "https://www.twilio.com/docs/whatsapp/api" }
 }

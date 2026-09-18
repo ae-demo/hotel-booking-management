@@ -1,0 +1,96 @@
+openapi: 3.0.3
+info:
+  title: Twilio WhatsApp Messaging API (derived subset)
+  version: "1.0"
+  description: >
+    Covers only the operations this design calls: sending a WhatsApp message
+    through Twilio's Messages resource, and reading a sent message's delivery
+    status. Twilio addresses a WhatsApp number as `whatsapp:+<E.164 number>`
+    on the same Messages resource used for SMS.
+servers:
+  - url: https://api.twilio.com/2010-04-01
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: HTTP Basic auth using the Twilio Account SID as username and an Auth Token (or API Key SID/Secret) as password.
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: integer }
+        message: { type: string }
+        more_info: { type: string }
+    Message:
+      type: object
+      properties:
+        sid: { type: string, description: Unique message identifier }
+        status:
+          type: string
+          enum: [queued, sending, sent, delivered, undelivered, failed, read]
+        to: { type: string, description: "e.g. whatsapp:+15558675310" }
+        from: { type: string, description: "e.g. whatsapp:+15551234567" }
+        body: { type: string }
+        date_created: { type: string, format: date-time }
+        error_code: { type: integer, nullable: true }
+        error_message: { type: string, nullable: true }
+security:
+  - basicAuth: []
+paths:
+  /Accounts/{AccountSid}/Messages.json:
+    post:
+      operationId: sendWhatsappMessage
+      summary: Send a WhatsApp message
+      x-aep-source: https://www.twilio.com/docs/whatsapp/api
+      parameters:
+        - { name: AccountSid, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [To, From, Body]
+              properties:
+                To: { type: string, description: "whatsapp:+<recipient E.164 number>" }
+                From: { type: string, description: "whatsapp:+<Twilio WhatsApp-enabled sender number>" }
+                Body: { type: string, description: Message text, using an approved template outside the 24h session window }
+                StatusCallback: { type: string, description: Webhook URL Twilio calls with delivery status updates }
+      responses:
+        '201':
+          description: Message queued for delivery
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /Accounts/{AccountSid}/Messages/{MessageSid}.json:
+    get:
+      operationId: getWhatsappMessageStatus
+      summary: Read a sent message's current delivery status
+      x-aep-source: https://www.twilio.com/docs/whatsapp/api
+      parameters:
+        - { name: AccountSid, in: path, required: true, schema: { type: string } }
+        - { name: MessageSid, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The message
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
