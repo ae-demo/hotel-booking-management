@@ -1,0 +1,705 @@
+openapi: 3.0.3
+info:
+  title: Hotel Booking API
+  version: 0.1.0
+servers:
+  - url: /
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: /oauth2/authorize
+          tokenUrl: /oauth2/token
+          scopes:
+            properties:manage: Create, update and delete properties
+            room-inventory:manage: Create/update room types, rooms, rate plans and availability
+            reservations:read: The caller's own reservations
+            reservations:create: Book a room for the caller
+            reservations:cancel: Cancel the caller's own reservation
+            reservations:read-all: Every reservation
+            reservations:manage: Create, modify, cancel, check in or check out any reservation
+            staff-accounts:read: Every staff account
+            staff-accounts:manage: Invite, update and remove staff accounts
+            channel-connections:read: Every channel connection
+            channel-connections:manage: Connect, update or disconnect a channel
+            sync-events:read: Every sync event
+            reports:read: Booking and revenue reports
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: integer, description: HTTP or application error code }
+        message: { type: string, description: short human-readable label }
+        description: { type: string, description: detailed explanation }
+        moreInfo: { type: string, description: URI to documentation }
+    Property:
+      type: object
+      required: [id, name, currency]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        address: { type: string }
+        currency: { type: string, description: ISO currency code this property sells in }
+    RoomType:
+      type: object
+      required: [id, propertyId, name, occupancy, baseRate]
+      properties:
+        id: { type: string }
+        propertyId: { type: string }
+        name: { type: string }
+        occupancy: { type: integer }
+        baseRate: { type: number }
+    RatePlan:
+      type: object
+      required: [id, roomTypeId, startDate, endDate, rate]
+      properties:
+        id: { type: string }
+        roomTypeId: { type: string }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        rate: { type: number }
+    AvailabilityDay:
+      type: object
+      required: [date, roomsAvailable]
+      properties:
+        date: { type: string, format: date }
+        roomsAvailable: { type: integer }
+    Reservation:
+      type: object
+      required: [id, propertyId, roomTypeId, checkIn, checkOut, status, source]
+      properties:
+        id: { type: string }
+        propertyId: { type: string }
+        roomTypeId: { type: string }
+        guestId: { type: string }
+        checkIn: { type: string, format: date }
+        checkOut: { type: string, format: date }
+        status: { type: string, enum: [pending, confirmed, checked-in, checked-out, cancelled] }
+        source: { type: string, enum: [direct, front-desk, channel] }
+        channelName: { type: string, nullable: true }
+    ReservationCreate:
+      type: object
+      required: [propertyId, roomTypeId, checkIn, checkOut]
+      properties:
+        propertyId: { type: string }
+        roomTypeId: { type: string }
+        checkIn: { type: string, format: date }
+        checkOut: { type: string, format: date }
+        guestName: { type: string }
+        guestEmail: { type: string }
+        guestPhone: { type: string }
+        whatsappOptIn: { type: boolean }
+    StaffAccount:
+      type: object
+      required: [id, propertyId, name, email, role]
+      properties:
+        id: { type: string }
+        propertyId: { type: string }
+        name: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [HotelManager, FrontDeskAgent, ChannelOperator] }
+    ChannelConnection:
+      type: object
+      required: [id, propertyId, channelName, status]
+      properties:
+        id: { type: string }
+        propertyId: { type: string }
+        channelName: { type: string }
+        status: { type: string, enum: [connected, disconnected, error] }
+        lastSyncedAt: { type: string, format: date-time, nullable: true }
+    SyncEvent:
+      type: object
+      required: [id, channelConnectionId, direction, outcome, occurredAt]
+      properties:
+        id: { type: string }
+        channelConnectionId: { type: string }
+        direction: { type: string, enum: [push, pull] }
+        outcome: { type: string, enum: [success, failed] }
+        occurredAt: { type: string, format: date-time }
+    ChannelBookingNotification:
+      type: object
+      required: [channelConnectionId, roomTypeId, checkIn, checkOut, guestName]
+      properties:
+        channelConnectionId: { type: string }
+        roomTypeId: { type: string }
+        checkIn: { type: string, format: date }
+        checkOut: { type: string, format: date }
+        guestName: { type: string }
+        guestEmail: { type: string }
+    BookingReport:
+      type: object
+      properties:
+        propertyId: { type: string }
+        totalBookings: { type: integer }
+        totalRevenue: { type: number }
+        directBookings: { type: integer }
+        channelBookings: { type: integer }
+security:
+  - oauth2: []
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Liveness check
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+
+  /properties:
+    get:
+      operationId: listProperties
+      summary: Every property (public, for guest search)
+      security: []
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Matching properties
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, data]
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/Property' } }
+    post:
+      operationId: createProperty
+      summary: Create a property
+      security:
+        - oauth2: [properties:manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Property' }
+      responses:
+        '201': { description: Property created, content: { application/json: { schema: { $ref: '#/components/schemas/Property' } } } }
+        '400': { description: Invalid input, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '401': { description: Not signed in, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /properties/{propertyId}:
+    parameters:
+      - { name: propertyId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getProperty
+      summary: A property (public)
+      security: []
+      responses:
+        '200': { description: The property, content: { application/json: { schema: { $ref: '#/components/schemas/Property' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    put:
+      operationId: updateProperty
+      summary: Update a property
+      security:
+        - oauth2: [properties:manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Property' }
+      responses:
+        '200': { description: Property updated, content: { application/json: { schema: { $ref: '#/components/schemas/Property' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    delete:
+      operationId: deleteProperty
+      summary: Delete a property
+      security:
+        - oauth2: [properties:manage]
+      responses:
+        '204': { description: Property deleted }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /properties/{propertyId}/room-types:
+    parameters:
+      - { name: propertyId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: listRoomTypes
+      summary: Room types for a property (public)
+      security: []
+      parameters:
+        - { name: checkIn, in: query, schema: { type: string, format: date } }
+        - { name: checkOut, in: query, schema: { type: string, format: date } }
+        - { name: guests, in: query, schema: { type: integer } }
+        - { name: limit, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Matching room types with current rate and availability
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, data]
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/RoomType' } }
+    post:
+      operationId: createRoomType
+      summary: Create a room type
+      security:
+        - oauth2: [room-inventory:manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RoomType' }
+      responses:
+        '201': { description: Room type created, content: { application/json: { schema: { $ref: '#/components/schemas/RoomType' } } } }
+        '400': { description: Invalid input, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /room-types/{roomTypeId}:
+    parameters:
+      - { name: roomTypeId, in: path, required: true, schema: { type: string } }
+    put:
+      operationId: updateRoomType
+      summary: Update a room type
+      security:
+        - oauth2: [room-inventory:manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RoomType' }
+      responses:
+        '200': { description: Room type updated, content: { application/json: { schema: { $ref: '#/components/schemas/RoomType' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    delete:
+      operationId: deleteRoomType
+      summary: Delete a room type
+      security:
+        - oauth2: [room-inventory:manage]
+      responses:
+        '204': { description: Room type deleted }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /room-types/{roomTypeId}/rate-plans:
+    parameters:
+      - { name: roomTypeId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: listRatePlans
+      summary: Date-based rate plans for a room type (public)
+      security: []
+      responses:
+        '200':
+          description: Rate plans
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, data]
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/RatePlan' } }
+    post:
+      operationId: createRatePlan
+      summary: Create a rate plan
+      security:
+        - oauth2: [room-inventory:manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RatePlan' }
+      responses:
+        '201': { description: Rate plan created, content: { application/json: { schema: { $ref: '#/components/schemas/RatePlan' } } } }
+        '400': { description: Invalid input, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /room-types/{roomTypeId}/availability:
+    parameters:
+      - { name: roomTypeId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getAvailabilityCalendar
+      summary: Availability calendar for a room type (public)
+      security: []
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: Availability by day
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AvailabilityDay' }
+    put:
+      operationId: updateAvailabilityCalendar
+      summary: Update availability for a date range
+      security:
+        - oauth2: [room-inventory:manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: '#/components/schemas/AvailabilityDay' }
+      responses:
+        '200':
+          description: Availability updated
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AvailabilityDay' }
+
+  /me/reservations:
+    get:
+      operationId: listMyReservations
+      summary: The caller's own reservations
+      security:
+        - oauth2: [reservations:read]
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: The caller's reservations
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, data]
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/Reservation' } }
+        '401': { description: Not signed in, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    post:
+      operationId: createMyReservation
+      summary: Book a room and pay online for the caller
+      security:
+        - oauth2: [reservations:create]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReservationCreate' }
+      responses:
+        '201': { description: Reservation confirmed and paid, content: { application/json: { schema: { $ref: '#/components/schemas/Reservation' } } } }
+        '400': { description: Invalid input or room unavailable, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '402': { description: Payment declined, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /me/reservations/{reservationId}/cancel:
+    parameters:
+      - { name: reservationId, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: cancelMyReservation
+      summary: Cancel the caller's own reservation
+      security:
+        - oauth2: [reservations:cancel]
+      responses:
+        '200': { description: Reservation cancelled, content: { application/json: { schema: { $ref: '#/components/schemas/Reservation' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /reservations:
+    get:
+      operationId: listReservations
+      summary: Every reservation, any source
+      security:
+        - oauth2: [reservations:read-all]
+      parameters:
+        - { name: propertyId, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Matching reservations
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, data]
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/Reservation' } }
+    post:
+      operationId: createWalkInReservation
+      summary: Create a walk-in or phone reservation
+      security:
+        - oauth2: [reservations:manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReservationCreate' }
+      responses:
+        '201': { description: Reservation created, content: { application/json: { schema: { $ref: '#/components/schemas/Reservation' } } } }
+        '400': { description: Invalid input or room unavailable, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /reservations/{reservationId}:
+    parameters:
+      - { name: reservationId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getReservation
+      summary: Any reservation by id
+      security:
+        - oauth2: [reservations:read-all]
+      responses:
+        '200': { description: The reservation, content: { application/json: { schema: { $ref: '#/components/schemas/Reservation' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    put:
+      operationId: updateReservation
+      summary: Modify any reservation
+      security:
+        - oauth2: [reservations:manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReservationCreate' }
+      responses:
+        '200': { description: Reservation updated, content: { application/json: { schema: { $ref: '#/components/schemas/Reservation' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /reservations/{reservationId}/cancel:
+    parameters:
+      - { name: reservationId, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: cancelReservation
+      summary: Cancel any reservation
+      security:
+        - oauth2: [reservations:manage]
+      responses:
+        '200': { description: Reservation cancelled, content: { application/json: { schema: { $ref: '#/components/schemas/Reservation' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /reservations/{reservationId}/check-in:
+    parameters:
+      - { name: reservationId, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: checkInReservation
+      summary: Check in a guest
+      security:
+        - oauth2: [reservations:manage]
+      responses:
+        '200': { description: Guest checked in, content: { application/json: { schema: { $ref: '#/components/schemas/Reservation' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /reservations/{reservationId}/check-out:
+    parameters:
+      - { name: reservationId, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: checkOutReservation
+      summary: Check out a guest
+      security:
+        - oauth2: [reservations:manage]
+      responses:
+        '200': { description: Guest checked out, content: { application/json: { schema: { $ref: '#/components/schemas/Reservation' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /staff-accounts:
+    get:
+      operationId: listStaffAccounts
+      summary: Every staff account
+      security:
+        - oauth2: [staff-accounts:read]
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Matching staff accounts
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, data]
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/StaffAccount' } }
+    post:
+      operationId: inviteStaffAccount
+      summary: Invite a Front Desk Staff or Channel Manager Operator account
+      security:
+        - oauth2: [staff-accounts:manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StaffAccount' }
+      responses:
+        '201': { description: Staff account invited, content: { application/json: { schema: { $ref: '#/components/schemas/StaffAccount' } } } }
+        '400': { description: Invalid input, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /staff-accounts/{staffAccountId}:
+    parameters:
+      - { name: staffAccountId, in: path, required: true, schema: { type: string } }
+    put:
+      operationId: updateStaffAccount
+      summary: Update a staff account
+      security:
+        - oauth2: [staff-accounts:manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StaffAccount' }
+      responses:
+        '200': { description: Staff account updated, content: { application/json: { schema: { $ref: '#/components/schemas/StaffAccount' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    delete:
+      operationId: removeStaffAccount
+      summary: Remove a staff account
+      security:
+        - oauth2: [staff-accounts:manage]
+      responses:
+        '204': { description: Staff account removed }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /channel-connections:
+    get:
+      operationId: listChannelConnections
+      summary: Every channel connection
+      security:
+        - oauth2: [channel-connections:read]
+      parameters:
+        - { name: propertyId, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Matching channel connections
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, data]
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/ChannelConnection' } }
+    post:
+      operationId: connectChannel
+      summary: Connect a property to an OTA channel
+      security:
+        - oauth2: [channel-connections:manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChannelConnection' }
+      responses:
+        '201': { description: Channel connected, content: { application/json: { schema: { $ref: '#/components/schemas/ChannelConnection' } } } }
+        '400': { description: Invalid input, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /channel-connections/{channelConnectionId}:
+    parameters:
+      - { name: channelConnectionId, in: path, required: true, schema: { type: string } }
+    put:
+      operationId: updateChannelConnection
+      summary: Update a channel connection
+      security:
+        - oauth2: [channel-connections:manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChannelConnection' }
+      responses:
+        '200': { description: Channel connection updated, content: { application/json: { schema: { $ref: '#/components/schemas/ChannelConnection' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    delete:
+      operationId: disconnectChannel
+      summary: Disconnect an OTA channel
+      security:
+        - oauth2: [channel-connections:manage]
+      responses:
+        '204': { description: Channel disconnected }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /channel-connections/{channelConnectionId}/sync-events:
+    parameters:
+      - { name: channelConnectionId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: listSyncEvents
+      summary: Sync push/pull history and status for a channel connection
+      security:
+        - oauth2: [sync-events:read]
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Matching sync events
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, data]
+                properties:
+                  count: { type: integer }
+                  next: { type: string, nullable: true }
+                  previous: { type: string, nullable: true }
+                  data: { type: array, items: { $ref: '#/components/schemas/SyncEvent' } }
+
+  /channel-bookings:
+    post:
+      operationId: receiveChannelBooking
+      summary: Receive a booking made on a connected OTA channel and reduce availability everywhere
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChannelBookingNotification' }
+      responses:
+        '201': { description: Reservation created from the channel booking, content: { application/json: { schema: { $ref: '#/components/schemas/Reservation' } } } }
+        '400': { description: Invalid notification, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /reports/bookings:
+    get:
+      operationId: getBookingReport
+      summary: Booking counts by source across properties and channels
+      security:
+        - oauth2: [reports:read]
+      parameters:
+        - { name: propertyId, in: query, schema: { type: string } }
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: Booking report
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/BookingReport' }
+
+  /reports/revenue:
+    get:
+      operationId: getRevenueReport
+      summary: Revenue totals across properties and channels
+      security:
+        - oauth2: [reports:read]
+      parameters:
+        - { name: propertyId, in: query, schema: { type: string } }
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: Revenue report
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/BookingReport' }

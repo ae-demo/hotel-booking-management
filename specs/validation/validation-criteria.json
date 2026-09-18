@@ -1,0 +1,166 @@
+{
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "statement": "A Hotel Manager/Admin can create and manage one or more properties, so the system supports a single hotel or a multi-property chain from one account.",
+      "stories": [1],
+      "criteria": [
+        { "id": "AC-001-a", "must": "A Hotel Manager/Admin can create a new property with a name, address and currency", "method": "e2e" },
+        { "id": "AC-001-b", "must": "A Hotel Manager/Admin can create a second, independent property under the same account", "method": "e2e" },
+        { "id": "AC-001-c", "must": "A Hotel Manager/Admin can edit and delete an existing property", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-002",
+      "statement": "A Hotel Manager/Admin can define room types, room inventory, and base rates for each property.",
+      "stories": [2],
+      "criteria": [
+        { "id": "AC-002-a", "must": "A Hotel Manager/Admin can create a room type with a name, occupancy and base rate under a property", "method": "e2e" },
+        { "id": "AC-002-b", "must": "A Hotel Manager/Admin can edit or remove a room type", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-003",
+      "statement": "A Hotel Manager/Admin can set date-based rate plans and availability calendars so pricing reflects demand and season.",
+      "stories": [3],
+      "criteria": [
+        { "id": "AC-003-a", "must": "A Hotel Manager/Admin can create a rate plan with a start date, end date and rate for a room type", "method": "e2e" },
+        { "id": "AC-003-b", "must": "A Hotel Manager/Admin can update the number of rooms available on a given date", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-004",
+      "statement": "A Hotel Manager/Admin can invite and manage Front Desk Staff and Channel Manager Operator accounts for their properties.",
+      "stories": [4],
+      "criteria": [
+        { "id": "AC-004-a", "must": "A Hotel Manager/Admin can invite a new staff account with a name, email and role (Front Desk Staff or Channel Manager Operator)", "method": "e2e" },
+        { "id": "AC-004-b", "must": "A Hotel Manager/Admin can edit or remove an existing staff account", "method": "e2e" },
+        { "id": "AC-004-c", "must": "An invited staff member signs in with only the access their assigned role grants", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-005",
+      "statement": "A Hotel Manager/Admin can view booking and revenue reports across all their properties and channels.",
+      "stories": [5],
+      "criteria": [
+        { "id": "AC-005-a", "must": "A Hotel Manager/Admin can view a booking report broken down by property and by source (direct vs. channel)", "method": "e2e" },
+        { "id": "AC-005-b", "must": "A Hotel Manager/Admin can view a revenue report across their properties and channels", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-006",
+      "statement": "A Channel Manager Operator can connect a property to one or more OTA channels so its rooms can be sold externally.",
+      "stories": [6],
+      "criteria": [
+        { "id": "AC-006-a", "must": "A Channel Manager Operator can connect a property to an OTA channel", "method": "e2e" },
+        { "id": "AC-006-b", "must": "A Channel Manager Operator can connect the same property to more than one OTA channel", "method": "e2e" },
+        { "id": "AC-006-c", "must": "A Channel Manager Operator can disconnect a channel from a property", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-007",
+      "statement": "Rate and availability changes made in the system automatically push to every connected OTA channel, keeping channel listings accurate.",
+      "stories": [7],
+      "criteria": [
+        { "id": "AC-007-a", "must": "A rate change made on a room type is pushed out to every OTA channel the property is connected to", "method": "e2e" },
+        { "id": "AC-007-b", "must": "An availability change made on a room type is pushed out to every OTA channel the property is connected to", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-008",
+      "statement": "A booking made on a connected OTA channel automatically appears in the system and reduces availability everywhere else, preventing overselling across channels.",
+      "stories": [8],
+      "criteria": [
+        { "id": "AC-008-a", "must": "A booking notification received from a connected OTA channel creates a reservation in the system tagged with its channel source", "method": "e2e" },
+        { "id": "AC-008-b", "must": "After a channel booking is received, the room's remaining availability decreases for direct booking and for every other connected channel", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-009",
+      "statement": "A Channel Manager Operator can see the sync status and history of each channel connection and is alerted to sync failures or conflicts.",
+      "stories": [9],
+      "criteria": [
+        { "id": "AC-009-a", "must": "A Channel Manager Operator can view the current status (connected/disconnected/error) of each channel connection", "method": "e2e" },
+        { "id": "AC-009-b", "must": "A Channel Manager Operator can view a history of past sync events (push and pull) for a channel connection", "method": "e2e" },
+        { "id": "AC-009-c", "must": "A failed sync is visibly flagged to the Channel Manager Operator", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-010",
+      "statement": "Front Desk Staff can search availability and create a walk-in or phone reservation for a guest.",
+      "stories": [10],
+      "criteria": [
+        { "id": "AC-010-a", "must": "Front Desk Staff can search room availability for a property, date range and guest count", "method": "e2e" },
+        { "id": "AC-010-b", "must": "Front Desk Staff can create a reservation for a guest without the guest booking online themselves", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-011",
+      "statement": "Front Desk Staff can view, modify, and cancel existing reservations regardless of booking source, to manage the property's full booking calendar.",
+      "stories": [11],
+      "criteria": [
+        { "id": "AC-011-a", "must": "Front Desk Staff can view a list of every reservation for a property, direct and channel-sourced alike", "method": "e2e" },
+        { "id": "AC-011-b", "must": "Front Desk Staff can modify the dates of an existing reservation", "method": "e2e" },
+        { "id": "AC-011-c", "must": "Front Desk Staff can cancel any existing reservation regardless of its source", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-012",
+      "statement": "Front Desk Staff can check guests in and out and record room/occupancy status to manage day-to-day operations.",
+      "stories": [12],
+      "criteria": [
+        { "id": "AC-012-a", "must": "Front Desk Staff can mark a reservation as checked in", "method": "e2e" },
+        { "id": "AC-012-b", "must": "Front Desk Staff can mark a reservation as checked out", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-013",
+      "statement": "A Guest can search for available rooms by property, dates, and guest count to find a room that fits their trip.",
+      "stories": [13],
+      "criteria": [
+        { "id": "AC-013-a", "must": "A Guest can search for available rooms specifying a property, check-in date, check-out date and guest count", "method": "e2e" },
+        { "id": "AC-013-b", "must": "Search results only show room types with availability for the requested dates and capacity", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-014",
+      "statement": "A Guest can book a room and pay online at the time of booking so the reservation is confirmed immediately.",
+      "stories": [14],
+      "criteria": [
+        { "id": "AC-014-a", "must": "A Guest can complete a booking by paying online through the Sampath Bank payment gateway", "method": "e2e" },
+        { "id": "AC-014-b", "must": "A successful payment confirms the reservation immediately", "method": "e2e" },
+        { "id": "AC-014-c", "must": "A declined or failed payment does not create a confirmed reservation", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-015",
+      "statement": "A Guest receives a booking confirmation and can view or cancel their own upcoming reservations.",
+      "stories": [15],
+      "criteria": [
+        { "id": "AC-015-a", "must": "A Guest receives an email confirmation when their booking is made", "method": "e2e" },
+        { "id": "AC-015-b", "must": "A Guest who opted in also receives a WhatsApp confirmation message when their booking is made", "method": "e2e" },
+        { "id": "AC-015-c", "must": "A Guest receives a confirmation (email, and WhatsApp if opted in) when they cancel a booking", "method": "e2e" },
+        { "id": "AC-015-d", "must": "A Guest can view a list of their own upcoming reservations", "method": "e2e" },
+        { "id": "AC-015-e", "must": "A Guest can cancel one of their own upcoming reservations", "method": "e2e" },
+        { "id": "AC-015-f", "must": "A Guest cannot view or cancel another guest's reservation", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-016",
+      "statement": "A Guest can sign in to the booking site so their reservations are tied to their account.",
+      "stories": [16],
+      "criteria": [
+        { "id": "AC-016-a", "must": "A Guest can sign in via SSO before completing a booking", "method": "e2e" },
+        { "id": "AC-016-b", "must": "Reservations made while signed in are associated with the Guest's account and appear in their own reservations list", "method": "e2e" }
+      ]
+    },
+    {
+      "id": "REQ-017",
+      "statement": "Each property prices and sells in a single configured currency; multi-currency and FX conversion are not supported in this version.",
+      "stories": [1, 2],
+      "criteria": [
+        { "id": "AC-017-a", "must": "A property has exactly one configured currency and all its rates display in that currency", "method": "manual" }
+      ]
+    }
+  ]
+}

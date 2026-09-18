@@ -1,0 +1,107 @@
+{
+  "version": 3,
+  "permissions": [
+    {
+      "resource": "properties",
+      "component": "hotel-api",
+      "description": "Hotel properties",
+      "actions": [
+        { "handle": "manage", "description": "Create, update and delete properties" }
+      ]
+    },
+    {
+      "resource": "room-inventory",
+      "component": "hotel-api",
+      "description": "Room types, rooms, rate plans and availability calendars",
+      "actions": [
+        { "handle": "manage", "description": "Create/update room types, rooms, rate plans and availability" }
+      ]
+    },
+    {
+      "resource": "reservations",
+      "component": "hotel-api",
+      "description": "Guest reservations, direct or channel-sourced",
+      "actions": [
+        { "handle": "read", "description": "The caller's own reservations" },
+        { "handle": "create", "description": "Book a room for the caller" },
+        { "handle": "cancel", "description": "Cancel the caller's own reservation" },
+        { "handle": "read-all", "description": "Every reservation" },
+        { "handle": "manage", "description": "Create a walk-in reservation, modify, cancel, check in or check out any reservation" }
+      ]
+    },
+    {
+      "resource": "staff-accounts",
+      "component": "hotel-api",
+      "description": "Front Desk Staff and Channel Manager Operator accounts",
+      "actions": [
+        { "handle": "read", "description": "Every staff account" },
+        { "handle": "manage", "description": "Invite, update and remove staff accounts" }
+      ]
+    },
+    {
+      "resource": "channel-connections",
+      "component": "hotel-api",
+      "description": "A property's connections to OTA channels",
+      "actions": [
+        { "handle": "read", "description": "Every channel connection" },
+        { "handle": "manage", "description": "Connect, update or disconnect a channel" }
+      ]
+    },
+    {
+      "resource": "sync-events",
+      "component": "hotel-api",
+      "description": "Channel sync push/pull history",
+      "actions": [
+        { "handle": "read", "description": "Every sync event" }
+      ]
+    },
+    {
+      "resource": "reports",
+      "component": "hotel-api",
+      "description": "Booking and revenue reports",
+      "actions": [
+        { "handle": "read", "description": "Booking and revenue reports across properties and channels" }
+      ]
+    }
+  ],
+  "groups": [
+    { "name": "HotelManagers", "description": "Hotel Manager/Admin users who configure properties and staff" },
+    { "name": "FrontDeskStaff", "description": "Front Desk Staff who manage day-to-day reservations" },
+    { "name": "ChannelOperators", "description": "Channel Manager Operators who configure and monitor OTA channel connections" }
+  ],
+  "roles": [
+    {
+      "name": "HotelManager",
+      "description": "Manages properties, room inventory, staff accounts and views reports across properties and channels.",
+      "stories": [1, 2, 3, 4, 5],
+      "grants": ["properties:manage", "room-inventory:manage", "staff-accounts:read", "staff-accounts:manage", "reports:read", "reservations:read-all"],
+      "assignTo": ["HotelManagers"]
+    },
+    {
+      "name": "FrontDeskAgent",
+      "description": "Handles walk-in reservations, modifications, cancellations and check-in/check-out for any reservation.",
+      "stories": [10, 11, 12],
+      "grants": ["reservations:read-all", "reservations:manage"],
+      "assignTo": ["FrontDeskStaff"]
+    },
+    {
+      "name": "ChannelOperator",
+      "description": "Configures OTA channel connections and monitors sync status and history.",
+      "stories": [6, 7, 8, 9],
+      "grants": ["channel-connections:read", "channel-connections:manage", "sync-events:read"],
+      "assignTo": ["ChannelOperators"]
+    },
+    {
+      "name": "Guest",
+      "description": "Searches for rooms, books and pays online, and manages their own upcoming reservations.",
+      "stories": [13, 14, 15, 16],
+      "grants": ["reservations:read", "reservations:create", "reservations:cancel"],
+      "enrolment": "self-service"
+    }
+  ],
+  "testUsers": [
+    { "username": "test-hotel-manager", "roles": ["HotelManager"] },
+    { "username": "test-front-desk-staff", "roles": ["FrontDeskAgent"] },
+    { "username": "test-channel-operator", "roles": ["ChannelOperator"] }
+  ]
+}
