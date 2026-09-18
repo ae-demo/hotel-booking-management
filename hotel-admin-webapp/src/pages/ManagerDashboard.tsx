@@ -2,7 +2,9 @@ import { useEffect, useState, type JSX } from "react";
 import { Card, CardContent, Grid, PageContent, PageTitle, Typography } from "@wso2/oxygen-ui";
 import { BarChart } from "@wso2/oxygen-ui-charts-react";
 import { hotelApi } from "../api";
-import { Can } from "../authz/gates";
+import { Can, useAuthz } from "../authz/gates";
+import { OPERATIONS } from "../authz/operations.gen";
+import { canCall } from "../authz/rules";
 import type { components } from "../generated/hotel-api";
 
 type BookingReport = components["schemas"]["BookingReport"];
@@ -12,6 +14,12 @@ function formatMoney(value: number): string {
 }
 
 export function ManagerDashboardPage(): JSX.Element {
+  const { scopes, signedIn } = useAuthz();
+  const canReadChannelConnections = canCall(
+    OPERATIONS["GET /channel-connections"],
+    scopes,
+    signedIn,
+  );
   const [reports, setReports] = useState<BookingReport[] | null>(null);
   const [channelCount, setChannelCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,8 +40,14 @@ export function ManagerDashboardPage(): JSX.Element {
 
   // Loaded separately, and only when the caller holds channel-connections:read
   // — HotelManager's grants do not include it (security.json), so this stat is
-  // shown as unavailable to that role rather than attempted and failed.
+  // shown as unavailable to that role rather than attempted and failed. The
+  // scope check MUST happen before the call, not just around the rendered
+  // value: hotelApi's shared middleware (src/api.ts -> src/authz/client.ts)
+  // treats every 401 from a live session as a Forbidden refusal and navigates
+  // the WHOLE app to /forbidden, so firing this request unconditionally took
+  // down the entire Dashboard for any role that doesn't hold this one scope.
   useEffect(() => {
+    if (!canReadChannelConnections) return;
     let live = true;
     void hotelApi.GET("/channel-connections", { params: { query: {} } }).then(({ data, error: err }) => {
       if (!live) return;
@@ -42,7 +56,7 @@ export function ManagerDashboardPage(): JSX.Element {
     return () => {
       live = false;
     };
-  }, []);
+  }, [canReadChannelConnections]);
 
   const totalBookings = reports?.reduce((sum, r) => sum + (r.totalBookings ?? 0), 0) ?? 0;
   const totalRevenue = reports?.reduce((sum, r) => sum + (r.totalRevenue ?? 0), 0) ?? 0;
