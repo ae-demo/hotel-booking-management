@@ -3,6 +3,15 @@
   "resource": {
     "name": "payment-service",
     "description": "Charges the guest's card/account online at the time of a direct booking, via Sampath Bank's Internet Payment Gateway (IPG).",
-    "provider": "Sampath Bank"
+    "provider": "Sampath Bank",
+    "contract": {
+      "type": "openapi",
+      "path": "openapi.yaml",
+      "origin": "assumed",
+      "accepted": {
+        "by": "01a0a3ad-6a8e-7d44-b90a-2393916ce696",
+        "at": "2026-09-18T09:13:02Z"
+      }
+    }
   }
 }
