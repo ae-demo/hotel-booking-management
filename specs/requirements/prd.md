@@ -40,7 +40,7 @@ A hotel booking management application that lets a hotel — or a small chain of
 - **Property scope**: The product supports both a single hotel and a multi-property chain under one account — properties are a first-class, repeatable unit from the start.
 - **Channel management depth**: Full two-way sync — the system pushes rates/availability out to connected OTA channels and automatically pulls channel bookings back in, keeping inventory consistent everywhere to prevent overbooking.
 - **OTA connectivity**: The product depends on third-party OTA channel APIs (capability: OTA channel connectivity, e.g. Booking.com, Expedia, Airbnb) — no specific provider is fixed yet; the connections to build are chosen at design time.
-- **Online payments**: Guests pay online at time of booking (capability: online payment processing) — no specific provider is fixed yet; chosen at design time.
+- **Online payments**: Guests pay online at time of booking through the Sampath Bank payment gateway. Credentials will be supplied later and the integration configured per its standard settings.
 - **Booking notifications**: Guests receive an email confirmation when they book or cancel (capability: transactional email) *assumed*.
 - **Currency**: Each property prices and sells in a single configured currency for this version; multi-currency and FX conversion are not in scope *assumed*.
 
@@ -56,8 +56,7 @@ A hotel booking management application that lets a hotel — or a small chain of
 ## Open Questions
 
 1. Which specific OTA channels must be supported at launch (Booking.com, Expedia, Airbnb, others)?
-2. Which payment provider should the online payment capability integrate with?
-3. Are there specific compliance requirements (e.g. PCI DSS scope, regional data protection) that constrain how payment or guest data is handled?
+2. Are there specific compliance requirements (e.g. PCI DSS scope, regional data protection) that constrain how payment or guest data is handled?
 
 ## Further Notes
 
