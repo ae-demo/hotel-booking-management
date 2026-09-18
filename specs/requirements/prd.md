@@ -41,7 +41,7 @@ A hotel booking management application that lets a hotel — or a small chain of
 - **Channel management depth**: Full two-way sync — the system pushes rates/availability out to connected OTA channels and automatically pulls channel bookings back in, keeping inventory consistent everywhere to prevent overbooking.
 - **OTA connectivity**: The product depends on third-party OTA channel APIs (capability: OTA channel connectivity, e.g. Booking.com, Expedia, Airbnb) — no specific provider is fixed yet; the connections to build are chosen at design time.
 - **Online payments**: Guests pay online at time of booking through the Sampath Bank payment gateway. Credentials will be supplied later and the integration configured per its standard settings.
-- **Booking notifications**: Guests receive an email confirmation when they book or cancel (capability: transactional email) *assumed*.
+- **Booking notifications**: Guests receive an email confirmation when they book or cancel (capability: transactional email). Guests may additionally opt in to a WhatsApp message for the same events (capability: WhatsApp messaging) — optional, not required to complete a booking.
 - **Currency**: Each property prices and sells in a single configured currency for this version; multi-currency and FX conversion are not in scope *assumed*.
 
 ## Out of Scope
