@@ -2,11 +2,28 @@
   "name": "email-service",
   "resource": {
     "name": "email-service",
-    "description": "Sends booking confirmation and cancellation emails to guests."
+    "description": "Sends booking confirmation and cancellation emails to guests.",
+    "provider": "SendGrid",
+    "config": [
+      {
+        "key": "SENDGRID_API_KEY",
+        "secret": true,
+        "description": "Your SendGrid API key with Mail Send permission, created in SendGrid Settings > API Keys."
+      },
+      {
+        "key": "SENDGRID_FROM_EMAIL",
+        "description": "The verified sender email address bookings are sent from."
+      }
+    ],
+    "contract": {
+      "type": "openapi",
+      "path": "openapi.yaml",
+      "origin": "provider"
+    }
   },
-  "suggestions": [
-    { "name": "SendGrid", "style": "rest-api", "description": "Widely used transactional email API with simple template support." },
-    { "name": "Amazon SES", "style": "rest-api", "description": "Low-cost transactional email, a good fit if the rest of the stack is already on AWS." },
-    { "name": "Postmark", "style": "rest-api", "description": "Transactional-email specialist known for fast, reliable delivery." }
-  ]
+  "provenance": {
+    "sourceUrl": "https://raw.githubusercontent.com/twilio/sendgrid-oai/main/spec/json/tsg_mail_v3.json",
+    "sha256": "6f17eb4d4dd458db133ee3deb6f0fbcdf8aca8d1d9ba9960349fafb32467a7c6",
+    "readOn": "2026-09-18T09:10:13Z"
+  }
 }
