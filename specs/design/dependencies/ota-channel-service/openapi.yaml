@@ -1,0 +1,156 @@
+openapi: 3.0.3
+info:
+  title: Booking.com Connectivity API (assumed REST/JSON subset)
+  version: "1.0"
+  description: >
+    ASSUMED interface, written under the user's authorization, covering only the
+    operations this design calls: register/connect a property's channel
+    connection, push rate/availability updates, and receive channel-made
+    reservations. Booking.com's real Connectivity API is partner-approval-gated
+    and natively uses an XML schema (OTA, developed by the OpenTravel Alliance)
+    over Basic Auth on separate non-PCI/PCI hosts — not the clean REST/JSON
+    shape modelled here. Uncertain: the exact authentication mechanism (likely
+    HTTP Basic Auth with partner-issued credentials, possibly per-host),
+    the true request/response wire format (XML rather than JSON), pagination on
+    the reservations pull, and the precise error-response shape. Treat this as
+    a placeholder contract to validate integration logic against, not the
+    provider's real wire format — confirm and replace once partner access and
+    real documentation are available.
+servers:
+  - url: https://supply-xml.booking.com
+    description: Non-PCI host — content, rates and availability
+  - url: https://secure-supply-xml.booking.com
+    description: PCI host — reservation retrieval and confirmation
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Partner-issued API username/password, assigned at Connectivity Partner onboarding.
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: integer }
+        message: { type: string }
+    ChannelConnectionRequest:
+      type: object
+      required: [hotelId]
+      properties:
+        hotelId: { type: string, description: The Booking.com property (hotel) ID }
+    ChannelConnectionStatus:
+      type: object
+      properties:
+        hotelId: { type: string }
+        status: { type: string, enum: [connected, disconnected, error] }
+    RateAvailabilityUpdate:
+      type: object
+      required: [hotelId, roomTypeId, date, roomsAvailable, rate]
+      properties:
+        hotelId: { type: string }
+        roomTypeId: { type: string }
+        date: { type: string, format: date }
+        roomsAvailable: { type: integer }
+        rate: { type: number }
+    ChannelReservation:
+      type: object
+      properties:
+        reservationId: { type: string }
+        hotelId: { type: string }
+        roomTypeId: { type: string }
+        checkIn: { type: string, format: date }
+        checkOut: { type: string, format: date }
+        guestName: { type: string }
+        guestEmail: { type: string }
+        status: { type: string, enum: [new, modified, cancelled] }
+security:
+  - basicAuth: []
+paths:
+  /connections:
+    post:
+      operationId: connectChannel
+      summary: Register a channel connection for a property
+      x-aep-source: https://developers.booking.com/connectivity/docs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChannelConnectionRequest' }
+      responses:
+        '201':
+          description: Connection registered
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChannelConnectionStatus' }
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /connections/{hotelId}:
+    parameters:
+      - { name: hotelId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getChannelConnectionStatus
+      summary: Current status of a property's channel connection
+      x-aep-source: https://developers.booking.com/connectivity/docs
+      responses:
+        '200':
+          description: Connection status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChannelConnectionStatus' }
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    delete:
+      operationId: disconnectChannel
+      summary: Remove a property's channel connection
+      x-aep-source: https://developers.booking.com/connectivity/docs
+      responses:
+        '204': { description: Disconnected }
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /rates-availability:
+    put:
+      operationId: pushRateAvailability
+      summary: Push a rate/availability update for a room type and date
+      x-aep-source: https://developers.booking.com/connectivity/docs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RateAvailabilityUpdate' }
+      responses:
+        '200':
+          description: Update accepted
+        '400':
+          description: Invalid update
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /reservations:
+    get:
+      operationId: listChannelReservations
+      summary: Retrieve new, modified and cancelled reservations for connected properties
+      x-aep-source: https://developers.booking.com/connectivity/docs
+      parameters:
+        - { name: hotelId, in: query, required: true, schema: { type: string } }
+        - { name: since, in: query, schema: { type: string, format: date-time } }
+      responses:
+        '200':
+          description: Matching reservations
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ChannelReservation' }
