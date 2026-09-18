@@ -1,0 +1,26 @@
+title Hotel Booking Management
+
+component guest-webapp as "Guest Booking Site" web-application
+component hotel-admin-webapp as "Hotel Back Office" web-application
+component hotel-api as "Hotel Booking API" service
+component hotel-db as "Hotel Database" database
+
+east user-auth as "Thunder Auth" identity-server
+south payment-service as "Payment Gateway (Sampath Bank)" service
+south ota-channel-service as "OTA Channel Connectivity" service
+south email-service as "Email Provider" service
+south whatsapp-service as "WhatsApp Messaging" service
+
+north -> guest-webapp
+west -> hotel-admin-webapp
+
+guest-webapp -> hotel-api
+hotel-admin-webapp -> hotel-api
+guest-webapp -> user-auth
+hotel-admin-webapp -> user-auth
+hotel-api -> user-auth
+hotel-api -> hotel-db
+hotel-api -> payment-service
+hotel-api -> ota-channel-service
+hotel-api -> email-service
+hotel-api -> whatsapp-service

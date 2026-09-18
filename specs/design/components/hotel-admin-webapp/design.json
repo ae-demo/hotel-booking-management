@@ -1,0 +1,17 @@
+{
+  "name": "hotel-admin-webapp",
+  "type": "web-application",
+  "version": "0.1.0",
+  "language": "TypeScript",
+  "buildpack": "docker",
+  "appPath": "hotel-admin-webapp",
+  "entrypoint": "deployment/web-application",
+  "exposure": "intranet",
+  "dependencies": [
+    { "kind": "component", "name": "hotel-api" },
+    { "kind": "platform-resource", "name": "user-auth", "resourceType": "thunder-app" }
+  ],
+  "description": "The hotel back-office web application for Hotel Manager/Admin, Front Desk Staff and Channel Manager Operator: property/room/rate configuration, staff management, reservation management, check-in/check-out, channel connections and sync monitoring, and reports. Does not serve guest-facing booking screens — those live in guest-webapp.",
+  "stories": [1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12],
+  "skillsPinned": ["wireframes", "react-webapp", "oxygen-ui-design-system", "thunder-authentication"]
+}

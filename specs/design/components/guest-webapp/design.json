@@ -1,0 +1,17 @@
+{
+  "name": "guest-webapp",
+  "type": "web-application",
+  "version": "0.1.0",
+  "language": "TypeScript",
+  "buildpack": "docker",
+  "appPath": "guest-webapp",
+  "entrypoint": "deployment/web-application",
+  "exposure": "internet",
+  "dependencies": [
+    { "kind": "component", "name": "hotel-api" },
+    { "kind": "platform-resource", "name": "user-auth", "resourceType": "thunder-app" }
+  ],
+  "description": "The guest-facing booking site: search rooms, book and pay online, sign in, view/cancel own reservations. Does not expose any property/rate configuration or channel-management screens — those live in hotel-admin-webapp.",
+  "stories": [13, 14, 15, 16],
+  "skillsPinned": ["wireframes", "react-webapp", "oxygen-ui-design-system", "thunder-authentication"]
+}

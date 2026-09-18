@@ -1,0 +1,8 @@
+{
+  "name": "payment-service",
+  "resource": {
+    "name": "payment-service",
+    "description": "Charges the guest's card/account online at the time of a direct booking, via Sampath Bank's Internet Payment Gateway (IPG).",
+    "provider": "Sampath Bank"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "whatsapp-service",
+  "resource": {
+    "name": "whatsapp-service",
+    "description": "Sends an optional WhatsApp message to guests who opt in, for the same booking/cancellation events as the email confirmation."
+  },
+  "suggestions": [
+    { "name": "WhatsApp Business Platform (Meta Cloud API)", "style": "rest-api", "description": "Meta's own WhatsApp Business API; requires template pre-approval for notification messages." },
+    { "name": "Twilio WhatsApp API", "style": "rest-api", "description": "Twilio's wrapper over the WhatsApp Business Platform, simpler onboarding than going direct to Meta." }
+  ]
+}

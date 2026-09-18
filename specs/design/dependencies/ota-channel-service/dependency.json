@@ -1,0 +1,13 @@
+{
+  "name": "ota-channel-service",
+  "resource": {
+    "name": "ota-channel-service",
+    "description": "Pushes room rates and availability out to connected OTA channels and pulls channel-made reservations back into the system, keeping inventory consistent everywhere."
+  },
+  "suggestions": [
+    { "name": "SiteMinder", "style": "rest-api", "description": "A channel-manager hub that connects once and fans out to many OTAs (Booking.com, Expedia, Airbnb, …) through a single API." },
+    { "name": "Cloudbeds Channel Manager", "style": "rest-api", "description": "Bundled channel management as part of a wider hotel-commerce platform." },
+    { "name": "Booking.com Connectivity API", "style": "rest-api", "description": "Direct integration with a single major OTA; needs one integration per channel added." },
+    { "name": "Expedia Partner Central Connectivity API", "style": "rest-api", "description": "Direct integration with Expedia only; needs one integration per channel added." }
+  ]
+}

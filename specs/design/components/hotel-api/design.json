@@ -1,0 +1,21 @@
+{
+  "name": "hotel-api",
+  "type": "service",
+  "version": "0.1.0",
+  "language": "Ballerina",
+  "buildpack": "docker",
+  "appPath": "hotel-api",
+  "entrypoint": "deployment/service",
+  "exposure": "internet",
+  "dependencies": [
+    { "kind": "platform-resource", "name": "hotel-db", "resourceType": "postgres-cnpg", "parameters": { "instances": 1, "storage": "5Gi", "version": "16" } },
+    { "kind": "platform-resource", "name": "user-auth", "resourceType": "thunder-app" },
+    { "kind": "external", "name": "payment-service", "description": "Charges the guest online via Sampath Bank's IPG at time of direct booking." },
+    { "kind": "external", "name": "ota-channel-service", "description": "Pushes rate/availability to connected OTAs and receives channel-made bookings back." },
+    { "kind": "external", "name": "email-service", "description": "Sends booking confirmation and cancellation emails to guests." },
+    { "kind": "external", "name": "whatsapp-service", "description": "Sends an optional WhatsApp confirmation/cancellation message to guests who opted in." }
+  ],
+  "description": "The core hotel booking and channel-management API: properties, room types/rooms, rate plans and availability, reservations (direct and channel-sourced), staff accounts, channel connections and sync history, and reports. Owns overbooking prevention by keeping one source of truth for availability across direct and channel sales. Does not render any UI and does not itself talk to OTAs' proprietary wire formats beyond the ota-channel-service abstraction.",
+  "stories": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  "skillsPinned": ["openapi-conventions", "ballerina", "api-management", "thunder-authentication"]
+}

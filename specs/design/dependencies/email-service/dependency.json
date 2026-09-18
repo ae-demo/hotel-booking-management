@@ -1,0 +1,12 @@
+{
+  "name": "email-service",
+  "resource": {
+    "name": "email-service",
+    "description": "Sends booking confirmation and cancellation emails to guests."
+  },
+  "suggestions": [
+    { "name": "SendGrid", "style": "rest-api", "description": "Widely used transactional email API with simple template support." },
+    { "name": "Amazon SES", "style": "rest-api", "description": "Low-cost transactional email, a good fit if the rest of the stack is already on AWS." },
+    { "name": "Postmark", "style": "rest-api", "description": "Transactional-email specialist known for fast, reliable delivery." }
+  ]
+}
